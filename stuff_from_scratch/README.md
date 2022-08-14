@@ -1,0 +1,1 @@
+Solving mid-complexity problems, mostly toy projects implementing basic stuff from scratch
