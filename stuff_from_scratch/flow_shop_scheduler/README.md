@@ -11,7 +11,7 @@ Here, each car is a new **job**, every job has the same number of **tasks** to c
 Conceptually, we have jobs, tasks, stations. Number of tasks same for all jobs. Number of stations = number of jobs.
 
 **J :** Number of jobs  
-**S :** Number of stations. Equal to number of tasks under a job (T) 
+**S :** Number of stations (also called machines). Equal to number of tasks under a job (T) 
 **P(j, t) :** Processing time of task t under job j  
 **Perm :** Permutation of jobs
 
