@@ -1,13 +1,12 @@
-from flow_shop_scheduler.pure_python.tests import test_problem_definition
+from flow_shop_scheduler.pure_python.tests import test_solution_explainer
 
 from typing import Callable
 
 TEST_SUITE = [
-    test_problem_definition.test_build_processing_times,
-    test_problem_definition.test_permutation_unique,
-    test_problem_definition.test_permutation_not_unique,
-    test_problem_definition.test_permutation_set_include_all_jobs_in_problem,
-    test_problem_definition.test_permutation_set_not_include_all_jobs_in_problem
+    test_solution_explainer.test_is_permutation_valid_unique,
+    test_solution_explainer.test_is_permutation_valid_not_unique,
+    test_solution_explainer.test_is_permutation_valid_include_all_jobs_in_problem,
+    test_solution_explainer.test_is_permutation_valid_not_include_all_jobs_in_problem
 ]
 
 
