@@ -6,7 +6,9 @@ TEST_SUITE = [
     test_solution_explainer.test_is_permutation_valid_unique,
     test_solution_explainer.test_is_permutation_valid_not_unique,
     test_solution_explainer.test_is_permutation_valid_include_all_jobs_in_problem,
-    test_solution_explainer.test_is_permutation_valid_not_include_all_jobs_in_problem
+    test_solution_explainer.test_is_permutation_valid_not_include_all_jobs_in_problem,
+    test_solution_explainer.test_schedule_creation,
+    test_solution_explainer.test_performance_calculation
 ]
 
 

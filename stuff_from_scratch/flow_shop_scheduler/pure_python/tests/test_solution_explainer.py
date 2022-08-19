@@ -1,12 +1,15 @@
 from flow_shop_scheduler.pure_python.solution_explainer import SolutionExplainer
 
-# using this problem for all functions testing "is_permutation_valid"
-prob_is_permutation_valid = {
+from pprint import pprint
+
+# using this problem for all functions here
+prob = {
     "num_jobs": 2,
     "num_machines": 2,
+    "num_tasks": 2,
     "initial_seed": ...,
-    "upper_bound": ...,
-    "lower_bound": ...,
+    "upper_bound": 99999,
+    "lower_bound": 11111,
     "processing_times": {"Job0": {"Task0": 1, "Task1": 2}, "Job1": {"Task0": 2, "Task1": 1}}
 }
 
@@ -15,7 +18,7 @@ def test_is_permutation_valid_unique():
     test_pass = False
     # if unique, no assertion error
     try:
-        _ = SolutionExplainer(prob_is_permutation_valid, solution=["Job1", "Job0"])
+        _ = SolutionExplainer(prob, solution=["Job1", "Job0"])
         test_pass = True
     except ValueError:
         ...
@@ -26,7 +29,7 @@ def test_is_permutation_valid_not_unique():
     test_pass = False
     # if not unique, assertion error
     try:
-        _ = SolutionExplainer(prob_is_permutation_valid, solution=["Job1", "Job1"])
+        _ = SolutionExplainer(prob, solution=["Job1", "Job1"])
     except ValueError:
         test_pass = True
     assert test_pass
@@ -36,7 +39,7 @@ def test_is_permutation_valid_include_all_jobs_in_problem():
     test_pass = False
     # if sets equal, no assertion error
     try:
-        _ = SolutionExplainer(prob_is_permutation_valid, solution=["Job1", "Job0"])
+        _ = SolutionExplainer(prob, solution=["Job1", "Job0"])
         test_pass = True
     except KeyError:
         ...
@@ -47,7 +50,30 @@ def test_is_permutation_valid_not_include_all_jobs_in_problem():
     test_pass = False
     # if sets equal, no assertion error
     try:
-        _ = SolutionExplainer(prob_is_permutation_valid, solution=["Job1", "Job99"])
+        _ = SolutionExplainer(prob, solution=["Job1", "Job99"])
     except KeyError:
         test_pass = True
     assert test_pass
+
+
+def test_schedule_creation():
+    exp = SolutionExplainer(prob, solution=["Job1", "Job0"])
+    desired_schedule = {
+        "Machine0": [{"job": "Job1", "task": "Task0", "start_time": 0, "processing_time": 2, "end_time": 2},
+                     {"job": "Job0", "task": "Task0", "start_time": 2, "processing_time": 1, "end_time": 3}],
+        "Machine1": [{"job": "Job1", "task": "Task1", "start_time": 2, "processing_time": 1, "end_time": 3},
+                     {"job": "Job0", "task": "Task1", "start_time": 3, "processing_time": 2, "end_time": 5}]
+    }
+    schedule = exp.result["schedule"]
+    assert schedule == desired_schedule
+
+
+def test_performance_calculation():
+    exp = SolutionExplainer(prob, solution=["Job1", "Job0"])
+    desired_perf_dict = {
+        "time_to_finish": 5,
+        "benchmark_upper_bound": 99999,
+        "benchmark_lower_bound": 11111
+    }
+    performance = exp.result["performance"]
+    assert performance == desired_perf_dict
