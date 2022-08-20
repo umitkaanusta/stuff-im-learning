@@ -8,7 +8,11 @@ TEST_SUITE = [
     test_solution_explainer.test_is_permutation_valid_include_all_jobs_in_problem,
     test_solution_explainer.test_is_permutation_valid_not_include_all_jobs_in_problem,
     test_solution_explainer.test_schedule_creation,
-    test_solution_explainer.test_performance_calculation
+    test_solution_explainer.test_performance_calculation,
+    test_solution_explainer.test_job_idle_times_creation_optimal_case,
+    test_solution_explainer.test_job_idle_times_creation_suboptimal_case,
+    test_solution_explainer.test_machine_idle_times_creation_optimal_case,
+    test_solution_explainer.test_machine_idle_times_creation_suboptimal_case
 ]
 
 

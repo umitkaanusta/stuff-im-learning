@@ -77,3 +77,43 @@ def test_performance_calculation():
     }
     performance = exp.result["performance"]
     assert performance == desired_perf_dict
+
+
+def test_job_idle_times_creation_optimal_case():
+    exp = SolutionExplainer(prob, solution=["Job0", "Job1"])
+    desired_job_idle_times = {
+        "Job0": {"start_time": 0, "end_time": 3, "total_processing_time": 3, "idle_time": 0},
+        "Job1": {"start_time": 1, "end_time": 4, "total_processing_time": 3, "idle_time": 1}
+    }
+    job_idle_times = exp.result["job_idle_times"]
+    assert job_idle_times == desired_job_idle_times
+
+
+def test_job_idle_times_creation_suboptimal_case():
+    exp = SolutionExplainer(prob, solution=["Job1", "Job0"])
+    desired_job_idle_times = {
+        "Job0": {"start_time": 2, "end_time": 5, "total_processing_time": 3, "idle_time": 2},
+        "Job1": {"start_time": 0, "end_time": 3, "total_processing_time": 3, "idle_time": 0}
+    }
+    job_idle_times = exp.result["job_idle_times"]
+    assert job_idle_times == desired_job_idle_times
+
+
+def test_machine_idle_times_creation_optimal_case():
+    exp = SolutionExplainer(prob, solution=["Job0", "Job1"])
+    desired_machine_idle_times = {
+        "Machine0": {"start_time": 0, "end_time": 3, "total_processing_time": 3, "idle_time": 0},
+        "Machine1": {"start_time": 1, "end_time": 4, "total_processing_time": 3, "idle_time": 1}
+    }
+    machine_idle_times = exp.result["machine_idle_times"]
+    assert machine_idle_times == desired_machine_idle_times
+
+
+def test_machine_idle_times_creation_suboptimal_case():
+    exp = SolutionExplainer(prob, solution=["Job1", "Job0"])
+    desired_machine_idle_times = {
+        "Machine0": {"start_time": 0, "end_time": 3, "total_processing_time": 3, "idle_time": 0},
+        "Machine1": {"start_time": 2, "end_time": 5, "total_processing_time": 3, "idle_time": 2}
+    }
+    machine_idle_times = exp.result["machine_idle_times"]
+    assert machine_idle_times == desired_machine_idle_times

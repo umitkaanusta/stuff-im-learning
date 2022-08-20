@@ -97,14 +97,75 @@ class SolutionExplainer:
         }
         return perf
 
+    def _build_job_idle_times(self, schedule):
+        """
+        Idle time of job = End time  - Total processing time
+
+        Steps
+        1) Add start time of each job
+        2) Add end time of each job
+        3) Add total processing time of each job
+        4) Calculate idle time
+        """
+        job_idle_times = {}
+        # add start time of each job
+        for record in schedule["Machine0"]:
+            job = record["job"]
+            job_start_time = record["start_time"]
+            job_idle_times[job] = {"start_time": job_start_time}
+        # add end time of each job
+        for record in schedule[f"Machine{self.problem['num_machines'] - 1}"]:
+            job = record["job"]
+            job_end_time = record["end_time"]
+            job_idle_times[job]["end_time"] = job_end_time
+        # add total processing time of each job
+        for job in self.problem["processing_times"]:
+            total_processing_time = sum(self.problem["processing_times"][job].values())
+            job_idle_times[job]["total_processing_time"] = total_processing_time
+        # calculate idle time
+        for job in job_idle_times:
+            start_time = job_idle_times[job]["start_time"]
+            end_time = job_idle_times[job]["end_time"]
+            total_processing_time = job_idle_times[job]["total_processing_time"]
+            job_idle_times[job]["idle_time"] = end_time - total_processing_time
+        return job_idle_times
+
+    def _build_machine_idle_times(self, schedule):
+        """
+        Idle time of machine = End time - Total processing time
+
+        Steps
+        1) Add start and end time of each machine
+        2) Add total processing time of each machine
+        3) Calculate idle time
+        """
+        machine_idle_times = {}
+        for machine in schedule:
+            # add start and end time
+            start_time = schedule[machine][0]["start_time"]
+            end_time = schedule[machine][-1]["end_time"]
+            # add total processing time
+            total_processing_time = 0
+            for j in range(self.problem["num_jobs"]):
+                total_processing_time += schedule[machine][j]["processing_time"]
+            # calculate idle time
+            idle_time = end_time - total_processing_time
+            machine_idle_times[machine] = {"start_time": start_time, "end_time": end_time,
+                                           "total_processing_time": total_processing_time, "idle_time": idle_time}
+        return machine_idle_times
+
     @property
     def result(self) -> dict:
         """
         Returns a dict showing:
         1) Performance: Time to finish, benchmark upper/lower bounds
         2) Schedule: Visualized schedule showing each machine's assignment status
+        3) Job idle times: Idle time of each job
         """
         schedule = self._build_schedule()
         performance = self._calc_performance(schedule)
-        res = {"performance": performance, "schedule": schedule}
+        job_idle_times = self._build_job_idle_times(schedule)
+        machine_idle_times = self._build_machine_idle_times(schedule)
+        res = {"performance": performance, "schedule": schedule,
+               "job_idle_times": job_idle_times, "machine_idle_times": machine_idle_times}
         return res
