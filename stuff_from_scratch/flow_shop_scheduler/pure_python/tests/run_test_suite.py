@@ -1,4 +1,5 @@
 from flow_shop_scheduler.pure_python.tests import test_solution_explainer
+from flow_shop_scheduler.pure_python.tests import test_solver
 
 from typing import Callable
 
@@ -12,7 +13,10 @@ TEST_SUITE = [
     test_solution_explainer.test_job_idle_times_creation_optimal_case,
     test_solution_explainer.test_job_idle_times_creation_suboptimal_case,
     test_solution_explainer.test_machine_idle_times_creation_optimal_case,
-    test_solution_explainer.test_machine_idle_times_creation_suboptimal_case
+    test_solution_explainer.test_machine_idle_times_creation_suboptimal_case,
+
+    test_solver.test_neighborhood_random,
+    test_solver.test_neighborhood_swap_pairs
 ]
 
 
