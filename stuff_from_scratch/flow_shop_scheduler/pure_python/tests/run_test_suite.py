@@ -21,7 +21,9 @@ TEST_SUITE = [
     test_solver.test_neighborhood_large_neigh_search,
     test_solver.test_heuristic_random_selection,
     test_solver.test_heuristic_hill_climbing,
-    test_solver.test_heuristic_random_hill_climbing
+    test_solver.test_heuristic_random_hill_climbing,
+
+    test_solver.test_solve_real_problem
 ]
 
 

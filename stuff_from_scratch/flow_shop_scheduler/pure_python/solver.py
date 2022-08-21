@@ -7,7 +7,8 @@ We will need two things to build a solver:
 """
 from flow_shop_scheduler.pure_python.solution_explainer import SolutionExplainer
 from collections import namedtuple
-from itertools import combinations, permutations
+from itertools import combinations, permutations, product
+from functools import partial
 import random
 import math
 
@@ -46,16 +47,21 @@ class DynamicStrategySolver:
     This way, we're able to smoothen our greedy heuristic.
     """
 
-    def __init__(self, problem: dict):
+    def __init__(self, problem: dict, num_iterations_limit=200):
         """
         :param problem: Problem in the dict format.
             Find examples in benchmark.json or tests/test_solution_explainer.py
+        :param num_iterations_limit: When to decide the problem is "adequately solved"
         """
         self.problem = problem
         self.initial_solution = list(self.problem["processing_times"].keys())
         self.randomizer = random.Random(self.problem["initial_seed"])
-        self.strategies = None
+
         self.lns_max_num_subsets = 1000
+
+        self.strategies = {}
+        self.num_iterations = 0
+        self.num_iterations_limit = num_iterations_limit
 
     def _neighborhood_remove_duplicate_permutations(self, neighborhood):
         neigh_dups_removed = list(set(tuple(perm) for perm in neighborhood))
@@ -144,7 +150,75 @@ class DynamicStrategySolver:
         cand_sorted = sorted(cand_perf.keys(), key=lambda item: cand_perf[item])
         soln_index = 0
         # at each step, 50% chance of going to next best solution, 50% chance of accepting current one
-        while self.randomizer.random() < 0.5 and soln_index < len(cand_sorted):
+        while self.randomizer.random() < 0.5 and soln_index < len(cand_sorted) - 1:
             soln_index += 1
         solution = list(cand_sorted[soln_index])
         return solution
+
+    def build_strategies(self):
+        neighbourhoods = [
+            # partialmethod helps freeze some parameter choices
+            ('Random Permutation', partial(self.neighborhood_random, max_num_permutations=100)),
+            ('Swap Pairs', self.neighborhood_swap_pairs),
+            ('Swap Idle (3)', partial(self.neighborhood_swap_idle, top_k_idle_jobs=3)),
+            ('Swap Idle (4)', partial(self.neighborhood_swap_idle, top_k_idle_jobs=4)),
+            ('Swap Idle (5)', partial(self.neighborhood_swap_idle, top_k_idle_jobs=5)),
+            ('Large Neighborhood Search (2)', partial(self.neighborhood_large_neigh_search, subset_size=2)),
+            ('Large Neighborhood Search (3)', partial(self.neighborhood_large_neigh_search, subset_size=3))
+        ]
+        heuristics = [
+            ("Random Selection", self.heuristic_random_selection),
+            ("Hill Climbing", self.heuristic_hill_climbing),
+            ("Random Hill Climbing", self.heuristic_random_hill_climbing)
+        ]
+        # combine these two, build strategies
+        for (neigh, heur) in product(neighbourhoods, heuristics):
+            strat = Strategy(f"{neigh[0]} & {heur[0]}", neigh[1], heur[1])
+            self.strategies[strat] = {"improvement": 0, "weight": 1, "usage": 0}
+
+    def pick_strategy(self):
+        weights = [self.strategies[strat]["weight"] for strat in self.strategies]
+        strat = self.randomizer.choices(list(self.strategies.keys()), weights=weights, k=1)[0]
+        return strat
+
+    def solve(self):
+        self.build_strategies()  # initialize strategies
+        best_soln = self.initial_solution
+        best_res = SolutionExplainer(self.problem, best_soln).result["performance"]["time_to_finish"]
+        while self.num_iterations < self.num_iterations_limit:
+            # pick strategy and solve
+            strategy = self.pick_strategy()
+            candidates = strategy.neighborhood()
+            solution = strategy.heuristic(candidates)
+            res = SolutionExplainer(self.problem, solution).result["performance"]["time_to_finish"]
+            # record that strat's results
+            self.strategies[strategy]["improvement"] += best_res - res  # 200 if best_res = 400 and res = 200
+            self.strategies[strategy]["usage"] += 1
+            # print status
+            print(f"Iteration: {self.num_iterations} - Strategy: {strategy.name} - "
+                  f"Current time to finish: {res} - Best: {best_res}")
+            # if strat better than the best so far, update
+            if res < best_res:
+                best_res = res
+                best_soln = solution[:]
+            # at each 100 iteration, switch strategy weights,
+            # dynamically shifting to recently more effective strategies.
+            if self.num_iterations > 0 and self.num_iterations % 100 == 0:
+                strat_sorted_by_improvement = sorted(self.strategies.keys(),
+                                                     key=lambda item: self.strategies[item]["improvement"],
+                                                     reverse=True)
+                # boost weight for successful strategies
+                for idx, strat in enumerate(strat_sorted_by_improvement):
+                    self.strategies[strat]["weight"] += len(self.strategies) - idx
+                    # to avoid starvation, additional boost for unused strategies
+                    if self.strategies[strat]["usage"] == 0:
+                        self.strategies[strat]["weight"] += len(self.strategies)
+                # reset improvements and usage
+                for strat in self.strategies:
+                    self.strategies[strat]["improvement"] = 0
+                    self.strategies[strat]["usage"] = 0
+            # rinse and repeat
+            self.num_iterations += 1
+        print(f"Solution: {best_soln}")
+        print(f"Time to completion: {best_res}")
+        return best_soln
