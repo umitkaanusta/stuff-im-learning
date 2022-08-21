@@ -5,6 +5,7 @@ We will need two things to build a solver:
 1) Neighborhood: Search space of possible solutions
 2) Heuristic: Method of selecting a solution from the list of possible solutions (candidates)
 """
+from flow_shop_scheduler.pure_python.solution_explainer import SolutionExplainer
 from collections import namedtuple
 from itertools import combinations
 import random
@@ -81,7 +82,19 @@ class DynamicStrategySolver:
         return neighborhood
 
     def neighborhood_swap_idle_pairs(self, top_k_idle_jobs=4):
-        raise NotImplementedError
+        neighborhood = [self.initial_solution]
+        exp = SolutionExplainer(self.problem, self.initial_solution)
+        job_idle_times = exp.result["job_idle_times"]
+        top_idle_jobs = sorted(job_idle_times,
+                               key=lambda item: job_idle_times[item]["idle_time"],
+                               reverse=True)[:top_k_idle_jobs]
+        indices_top_idle_jobs = [self.initial_solution.index(job) for job in top_idle_jobs]
+        for pair_indices in combinations(indices_top_idle_jobs, 2):
+            i, j = pair_indices
+            candidate = self.initial_solution[:]
+            candidate[i], candidate[j] = candidate[j], candidate[i]  # swap pairs
+            neighborhood.append(candidate)
+        return neighborhood
 
     def neighborhood_large_neigh_search(self, subset_size=4):
         raise NotImplementedError

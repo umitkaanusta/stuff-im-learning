@@ -16,7 +16,8 @@ TEST_SUITE = [
     test_solution_explainer.test_machine_idle_times_creation_suboptimal_case,
 
     test_solver.test_neighborhood_random,
-    test_solver.test_neighborhood_swap_pairs
+    test_solver.test_neighborhood_swap_pairs,
+    test_solver.test_neighborhood_swap_idle_pairs
 ]
 
 

@@ -38,3 +38,13 @@ def test_neighborhood_swap_pairs():
         ["Job0", "Job1", "Job3", "Job2"]
     ]
     assert neigh == desired_neigh_swap_pairs
+
+
+def test_neighborhood_swap_idle_pairs():
+    dss = DynamicStrategySolver(prob)
+    neigh = dss.neighborhood_swap_idle_pairs(top_k_idle_jobs=3)
+    desired_neigh_swap_idle_pairs = [
+        ["Job0", "Job1", "Job2", "Job3"], ["Job0", "Job3", "Job2", "Job1"],
+        ["Job0", "Job2", "Job1", "Job3"], ["Job0", "Job1", "Job3", "Job2"]
+    ]
+    assert neigh == desired_neigh_swap_idle_pairs
