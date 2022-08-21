@@ -59,4 +59,6 @@ def test_neighborhood_large_neigh_search():
         ["Job0", "Job1", "Job3", "Job2"], ["Job0", "Job3", "Job2", "Job1"],
         ["Job0", "Job1", "Job2", "Job3"],
     ]
-    assert neigh == desired_neigh
+    # since there's random shuffle - we check equality with set equality
+    assert all(perm in neigh for perm in desired_neigh)
+    assert all(perm in desired_neigh for perm in neigh)
