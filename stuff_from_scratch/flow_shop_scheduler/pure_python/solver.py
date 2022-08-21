@@ -54,6 +54,7 @@ class DynamicStrategySolver:
         self.initial_solution = list(self.problem["processing_times"].keys())
         self.randomizer = random.Random(self.problem["initial_seed"])
         self.strategies = None
+        self.lns_max_num_subsets = 1000
 
     def neighborhood_random(self, num_permutations=120):
         """
@@ -97,7 +98,27 @@ class DynamicStrategySolver:
         return neighborhood
 
     def neighborhood_large_neigh_search(self, subset_size=4):
-        raise NotImplementedError
+        neighborhood = [self.initial_solution]
+        subset_indices = list(combinations(range(len(self.initial_solution)), subset_size))
+        self.randomizer.shuffle(subset_indices)
+        # get best perm in each subset
+        for subset in subset_indices[:self.lns_max_num_subsets]:
+            exp_init = SolutionExplainer(self.problem, self.initial_solution)
+            best_time = exp_init.result["performance"]["time_to_finish"]
+            best_perm = self.initial_solution
+            for pair_indices in combinations(subset, 2):
+                i, j = pair_indices
+                candidate = self.initial_solution[:]
+                candidate[i], candidate[j] = candidate[j], candidate[i]  # swap pairs
+                exp_curr = SolutionExplainer(self.problem, candidate)
+                curr_time = exp_curr.result["performance"]["time_to_finish"]
+                if curr_time < best_time:
+                    best_perm = candidate
+            neighborhood.append(best_perm)
+        # remove duplicate perms
+        neighborhood = list(set(tuple(perm) for perm in neighborhood))
+        neighborhood = [list(perm_tuple) for perm_tuple in neighborhood]
+        return neighborhood
 
     def heuristic_random_selection(self):
         raise NotImplementedError

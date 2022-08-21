@@ -31,20 +31,32 @@ def test_neighborhood_random():
 def test_neighborhood_swap_pairs():
     dss = DynamicStrategySolver(prob)
     neigh = dss.neighborhood_swap_pairs()
-    desired_neigh_swap_pairs = [
+    desired_neigh = [
         ["Job0", "Job1", "Job2", "Job3"], ["Job1", "Job0", "Job2", "Job3"],
         ["Job2", "Job1", "Job0", "Job3"], ["Job3", "Job1", "Job2", "Job0"],
         ["Job0", "Job2", "Job1", "Job3"], ["Job0", "Job3", "Job2", "Job1"],
         ["Job0", "Job1", "Job3", "Job2"]
     ]
-    assert neigh == desired_neigh_swap_pairs
+    assert neigh == desired_neigh
 
 
 def test_neighborhood_swap_idle_pairs():
+    # top idle jobs: Job1, Job3, Job2
     dss = DynamicStrategySolver(prob)
     neigh = dss.neighborhood_swap_idle_pairs(top_k_idle_jobs=3)
-    desired_neigh_swap_idle_pairs = [
+    desired_neigh = [
         ["Job0", "Job1", "Job2", "Job3"], ["Job0", "Job3", "Job2", "Job1"],
         ["Job0", "Job2", "Job1", "Job3"], ["Job0", "Job1", "Job3", "Job2"]
     ]
-    assert neigh == desired_neigh_swap_idle_pairs
+    assert neigh == desired_neigh
+
+
+def test_neighborhood_large_neigh_search():
+    # subsets: [(Job0, Job1, Job2), (Job0, Job1, Job3), (Job0, Job2, Job3), (Job1, Job2, Job3)]
+    dss = DynamicStrategySolver(prob)
+    neigh = dss.neighborhood_large_neigh_search(subset_size=3)
+    desired_neigh = [
+        ["Job0", "Job1", "Job3", "Job2"], ["Job0", "Job3", "Job2", "Job1"],
+        ["Job0", "Job1", "Job2", "Job3"],
+    ]
+    assert neigh == desired_neigh
