@@ -7,7 +7,7 @@ We will need two things to build a solver:
 """
 from flow_shop_scheduler.pure_python.solution_explainer import SolutionExplainer
 from collections import namedtuple
-from itertools import combinations
+from itertools import combinations, permutations
 import random
 import math
 
@@ -45,6 +45,7 @@ class DynamicStrategySolver:
     At each step, with 50% chance, move on considering the next best solution.
     This way, we're able to smoothen our greedy heuristic.
     """
+
     def __init__(self, problem: dict):
         """
         :param problem: Problem in the dict format.
@@ -56,18 +57,25 @@ class DynamicStrategySolver:
         self.strategies = None
         self.lns_max_num_subsets = 1000
 
-    def neighborhood_random(self, num_permutations=120):
+    def _neighborhood_remove_duplicate_permutations(self, neighborhood):
+        neigh_dups_removed = list(set(tuple(perm) for perm in neighborhood))
+        neigh_dups_removed = [list(perm_tuple) for perm_tuple in neigh_dups_removed]
+        return neigh_dups_removed
+
+    def neighborhood_random(self, max_num_permutations=120):
         """
-        :param num_permutations: Number of permutations in the neighborhood
-        :return: A list of possible permutations created by random.shuffle
+        :param max_num_permutations: Number of permutations in the neighborhood
+        :return: A list of possible permutations created by random.shuffle.
+            Duplicates are removed.
         """
-        num_perm = (num_permutations if self.problem["num_jobs"] >= 5
+        num_perm = (max_num_permutations if self.problem["num_jobs"] >= 5
                     else math.factorial(self.problem["num_jobs"]))
         neighborhood = [self.initial_solution]
         for i in range(num_perm):
             candidate = self.initial_solution[:]  # copy list
             self.randomizer.shuffle(candidate)
             neighborhood.append(candidate)
+        neighborhood = self._neighborhood_remove_duplicate_permutations(neighborhood)
         return neighborhood
 
     def neighborhood_swap_pairs(self):
@@ -80,9 +88,10 @@ class DynamicStrategySolver:
             candidate = self.initial_solution[:]
             candidate[i], candidate[j] = candidate[j], candidate[i]  # swap pairs
             neighborhood.append(candidate)
+        neighborhood = self._neighborhood_remove_duplicate_permutations(neighborhood)
         return neighborhood
 
-    def neighborhood_swap_idle_pairs(self, top_k_idle_jobs=4):
+    def neighborhood_swap_idle(self, top_k_idle_jobs=4):
         neighborhood = [self.initial_solution]
         exp = SolutionExplainer(self.problem, self.initial_solution)
         job_idle_times = exp.result["job_idle_times"]
@@ -90,11 +99,12 @@ class DynamicStrategySolver:
                                key=lambda item: job_idle_times[item]["idle_time"],
                                reverse=True)[:top_k_idle_jobs]
         indices_top_idle_jobs = [self.initial_solution.index(job) for job in top_idle_jobs]
-        for pair_indices in combinations(indices_top_idle_jobs, 2):
-            i, j = pair_indices
+        for indices in permutations(indices_top_idle_jobs):
             candidate = self.initial_solution[:]
-            candidate[i], candidate[j] = candidate[j], candidate[i]  # swap pairs
+            for i in range(len(indices)):
+                candidate[indices_top_idle_jobs[i]] = self.initial_solution[indices[i]]
             neighborhood.append(candidate)
+        neighborhood = self._neighborhood_remove_duplicate_permutations(neighborhood)
         return neighborhood
 
     def neighborhood_large_neigh_search(self, subset_size=4):
@@ -106,18 +116,16 @@ class DynamicStrategySolver:
             exp_init = SolutionExplainer(self.problem, self.initial_solution)
             best_time = exp_init.result["performance"]["time_to_finish"]
             best_perm = self.initial_solution
-            for pair_indices in combinations(subset, 2):
-                i, j = pair_indices
+            for indices in permutations(subset):
                 candidate = self.initial_solution[:]
-                candidate[i], candidate[j] = candidate[j], candidate[i]  # swap pairs
+                for i in range(len(indices)):
+                    candidate[subset[i]] = self.initial_solution[indices[i]]
                 exp_curr = SolutionExplainer(self.problem, candidate)
                 curr_time = exp_curr.result["performance"]["time_to_finish"]
                 if curr_time < best_time:
                     best_perm = candidate
             neighborhood.append(best_perm)
-        # remove duplicate perms
-        neighborhood = list(set(tuple(perm) for perm in neighborhood))
-        neighborhood = [list(perm_tuple) for perm_tuple in neighborhood]
+        neighborhood = self._neighborhood_remove_duplicate_permutations(neighborhood)
         return neighborhood
 
     def heuristic_random_selection(self):

@@ -23,7 +23,6 @@ prob = {
 def test_neighborhood_random():
     dss = DynamicStrategySolver(prob)
     neigh = dss.neighborhood_random()
-    assert len(neigh) == 24 + 1  # 4! + 1 (initial solution)
     # all shuffled solutions are valid
     assert all(SolutionExplainer(prob, perm) for perm in neigh)
 
@@ -37,18 +36,20 @@ def test_neighborhood_swap_pairs():
         ["Job0", "Job2", "Job1", "Job3"], ["Job0", "Job3", "Job2", "Job1"],
         ["Job0", "Job1", "Job3", "Job2"]
     ]
-    assert neigh == desired_neigh
+    # order not guaranteed. use set equality
+    assert all(perm in neigh for perm in desired_neigh)
+    assert all(perm in desired_neigh for perm in neigh)
 
 
-def test_neighborhood_swap_idle_pairs():
-    # top idle jobs: Job1, Job3, Job2
+def test_neighborhood_swap_idle():
+    # top 3 idle jobs: Job1, Job3
     dss = DynamicStrategySolver(prob)
-    neigh = dss.neighborhood_swap_idle_pairs(top_k_idle_jobs=3)
+    neigh = dss.neighborhood_swap_idle(top_k_idle_jobs=2)
     desired_neigh = [
-        ["Job0", "Job1", "Job2", "Job3"], ["Job0", "Job3", "Job2", "Job1"],
-        ["Job0", "Job2", "Job1", "Job3"], ["Job0", "Job1", "Job3", "Job2"]
+        ["Job0", "Job1", "Job2", "Job3"], ["Job0", "Job3", "Job2", "Job1"]
     ]
-    assert neigh == desired_neigh
+    assert all(perm in neigh for perm in desired_neigh)
+    assert all(perm in desired_neigh for perm in neigh)
 
 
 def test_neighborhood_large_neigh_search():

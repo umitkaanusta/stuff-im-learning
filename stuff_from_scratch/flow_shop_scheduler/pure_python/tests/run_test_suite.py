@@ -17,7 +17,7 @@ TEST_SUITE = [
 
     test_solver.test_neighborhood_random,
     test_solver.test_neighborhood_swap_pairs,
-    test_solver.test_neighborhood_swap_idle_pairs,
+    test_solver.test_neighborhood_swap_idle,
     test_solver.test_neighborhood_large_neigh_search
 ]
 
