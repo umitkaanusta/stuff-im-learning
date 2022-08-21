@@ -128,11 +128,23 @@ class DynamicStrategySolver:
         neighborhood = self._neighborhood_remove_duplicate_permutations(neighborhood)
         return neighborhood
 
-    def heuristic_random_selection(self):
-        raise NotImplementedError
+    def heuristic_random_selection(self, candidates):
+        return self.randomizer.choice(candidates)
 
-    def heuristic_hill_climbing(self):
-        raise NotImplementedError
+    def heuristic_hill_climbing(self, candidates):
+        cand_perf = {tuple(perm): SolutionExplainer(self.problem, perm).result["performance"]["time_to_finish"]
+                     for perm in candidates}
+        cand_sorted = sorted(cand_perf.keys(), key=lambda item: cand_perf[item])
+        solution = list(cand_sorted[0])
+        return solution
 
-    def heuristic_random_hill_climbing(self):
-        raise NotImplementedError
+    def heuristic_random_hill_climbing(self, candidates):
+        cand_perf = {tuple(perm): SolutionExplainer(self.problem, perm).result["performance"]["time_to_finish"]
+                     for perm in candidates}
+        cand_sorted = sorted(cand_perf.keys(), key=lambda item: cand_perf[item])
+        soln_index = 0
+        # at each step, 50% chance of going to next best solution, 50% chance of accepting current one
+        while self.randomizer.random() < 0.5 and soln_index < len(cand_sorted):
+            soln_index += 1
+        solution = list(cand_sorted[soln_index])
+        return solution

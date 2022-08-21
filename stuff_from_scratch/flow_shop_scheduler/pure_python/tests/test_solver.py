@@ -63,3 +63,27 @@ def test_neighborhood_large_neigh_search():
     # since there's random shuffle - we check equality with set equality
     assert all(perm in neigh for perm in desired_neigh)
     assert all(perm in desired_neigh for perm in neigh)
+
+
+def test_heuristic_random_selection():
+    dss = DynamicStrategySolver(prob)
+    candidates = [["Job0", "Job1", "Job2", "Job3"], ["Job3", "Job2", "Job1", "Job0"]]
+    solution = dss.heuristic_random_selection(candidates)
+    assert SolutionExplainer(prob, solution)  # solution is valid
+    assert solution in candidates
+
+
+def test_heuristic_hill_climbing():
+    dss = DynamicStrategySolver(prob)
+    candidates = [["Job0", "Job1", "Job2", "Job3"], ["Job3", "Job2", "Job1", "Job0"]]
+    solution = dss.heuristic_hill_climbing(candidates)
+    desired_solution = ["Job0", "Job1", "Job2", "Job3"]  # time to finish = 271. it's 445 for the other one
+    assert solution == desired_solution
+
+
+def test_heuristic_random_hill_climbing():
+    dss = DynamicStrategySolver(prob)
+    candidates = [["Job0", "Job1", "Job2", "Job3"], ["Job3", "Job2", "Job1", "Job0"]]
+    solution = dss.heuristic_random_hill_climbing(candidates)
+    assert SolutionExplainer(prob, solution)
+    assert solution in candidates
